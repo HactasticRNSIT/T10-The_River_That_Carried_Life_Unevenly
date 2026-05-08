@@ -1,0 +1,18 @@
+# Virtual Environment
+env/
+venv/
+ENV/
+.venv/
+backend/env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data files (Optional: ignore if the CSV is too big)
+backend/data/*.csv
+
+# OS files
+.DS_Store
+Thumbs.db
