@@ -31,5 +31,5 @@ def engineer_features(df):
         lambda x: x.shift(1).fillna(x.mean())
     )
 
-    df = df.fillna(method="ffill").fillna(0)
+    df = df.ffill().fillna(0)
     return df
