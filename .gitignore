@@ -12,7 +12,8 @@ __pycache__/
 
 # Data files (Optional: ignore if the CSV is too big)
 backend/data/*.csv
-
+# AI Models
+backend/models/*.pkl
 # OS files
 .DS_Store
 Thumbs.db
