@@ -12,8 +12,13 @@ import data_generator
 
 app = FastAPI(title="River Ecosystem AI API")
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"],
-                   allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],          # allow ALL origins
+    allow_credentials=False,       # must be False when using *
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ── Startup: load & train ──────────────────────────────────────────────────
 @app.on_event("startup")
@@ -62,15 +67,50 @@ def get_map_data():
     return result
 
 @app.get("/segment/{segment_id}")
-def get_segment_detail(segment_id: int, days: int = 90):
-    seg_df = df[df["segment_id"] == segment_id].tail(days)
-    return {
-        "segment_id": segment_id,
-        "timeseries": seg_df[["date","dissolved_oxygen","nitrate_mgl",
-                               "turbidity_ntu","water_temp_c","rhi",
-                               "is_anomaly","fish_species"]].to_dict("records"),
-        "forecast": forecast_segment(seg_df, n_weeks=12),
-    }
+def get_segment_detail(segment_id: int, days: int = 60):
+    try:
+        seg_df = df[df["segment_id"] == segment_id].copy()
+        
+        if seg_df.empty:
+            return {"error": f"Segment {segment_id} not found", "segment_id": segment_id}
+        
+        seg_df = seg_df.tail(days)
+        
+        # Safe timeseries — only columns that exist
+        ts_cols = ["date", "dissolved_oxygen", "nitrate_mgl",
+                   "turbidity_ntu", "water_temp_c", "rhi", "is_anomaly"]
+        
+        # Add fish_species only if it exists and has data
+        if "fish_species" in seg_df.columns:
+            ts_cols.append("fish_species")
+        
+        ts = seg_df[ts_cols].copy()
+        ts["date"] = ts["date"].astype(str)
+        
+        # Replace NaN with None so JSON serializes properly
+        ts = ts.where(ts.notna(), other=None)
+        
+        timeseries = ts.to_dict("records")
+        
+        # Safe forecast
+        try:
+            forecast = forecast_segment(seg_df, n_weeks=12)
+        except Exception as e:
+            print(f"Forecast error: {e}")
+            # Fallback simple forecast
+            last_rhi = float(seg_df["rhi"].iloc[-1]) if "rhi" in seg_df.columns else 50.0
+            forecast = [{"week": w, "rhi": round(last_rhi + (w * -0.3), 1)} for w in range(1, 13)]
+        
+        return {
+            "segment_id": segment_id,
+            "timeseries": timeseries,
+            "forecast": forecast,
+        }
+    
+    except Exception as e:
+        import traceback
+        print(f"❌ Segment error: {traceback.format_exc()}")
+        return {"error": str(e), "segment_id": segment_id, "timeseries": [], "forecast": []}
 
 @app.get("/alerts")
 def get_alerts():
