@@ -1,19 +1,37 @@
-# Virtual Environment
+# --- API & Secrets ---
+# Ignoring the specific API connection file as requested
+frontend/src/api/riverapi.js
+
+# --- Virtual Environments ---
 env/
 venv/
 ENV/
 .venv/
 backend/env/
 
-# Python cache
+# --- Backend Logs & Cache ---
+backend/*.log
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Data files (Optional: ignore if the CSV is too big)
+# --- Data & AI Models ---
+# Ignore generated data and serialized model files
 backend/data/*.csv
-# AI Models
 backend/models/*.pkl
-# OS files
+backend/models/*.h5
+backend/models/*.joblib
+
+# --- Frontend Dependencies & Builds ---
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# --- OS Files ---
 .DS_Store
 Thumbs.db
+.vscode/
